@@ -25,6 +25,7 @@ import com.simibubi.create.foundation.utility.WrappedWorld;
 import com.simibubi.create.modules.contraptions.base.KineticTileEntity;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.AbstractChassisBlock;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.ChassisTileEntity;
+import com.simibubi.create.modules.contraptions.components.contraptions.seat.SeatMovementBehaviour;
 import com.simibubi.create.modules.contraptions.components.saw.SawBlock;
 import com.simibubi.create.modules.contraptions.redstone.ContactBlock;
 import com.simibubi.create.modules.contraptions.relays.belt.BeltBlock;
@@ -62,6 +63,7 @@ public abstract class Contraption {
 	public List<MutablePair<BlockInfo, MovementContext>> actors;
 	public CombinedInvWrapper inventory;
 	public List<TileEntity> customRenderTEs;
+	public List<BlockPos> seats;
 
 	public AxisAlignedBB bounds;
 	public boolean stalled;
@@ -76,6 +78,7 @@ public abstract class Contraption {
 		blocks = new HashMap<>();
 		storage = new HashMap<>();
 		actors = new ArrayList<>();
+		seats = new ArrayList<>();
 		renderOrder = new ArrayList<>();
 		customRenderTEs = new ArrayList<>();
 	}
@@ -294,12 +297,16 @@ public abstract class Contraption {
 		});
 
 		actors.clear();
+		seats.clear();
 		nbt.getList("Actors", 10).forEach(c -> {
 			CompoundNBT comp = (CompoundNBT) c;
 			BlockInfo info = blocks.get(NBTUtil.readBlockPos(comp.getCompound("Pos")));
 			MovementContext context = MovementContext.readNBT(world, info, comp);
 			context.contraption = this;
 			getActors().add(MutablePair.of(info, context));
+			MovementBehaviour movement = getMovement(info.state);
+			if (movement instanceof SeatMovementBehaviour)
+				seats.add(info.pos);
 		});
 
 		storage.clear();
@@ -461,10 +468,17 @@ public abstract class Contraption {
 	}
 
 	public void initActors(World world) {
+		seats.clear();
 		for (MutablePair<BlockInfo, MovementContext> pair : actors) {
 			MovementContext context = new MovementContext(world, pair.left);
 			context.contraption = this;
-			getMovement(pair.left.state).startMoving(context);
+
+			MovementBehaviour movement = getMovement(pair.left.state);
+			if (movement instanceof SeatMovementBehaviour) {
+				context.data.putInt("SeatId", seats.size());
+				seats.add(pair.left.pos);
+			}
+			movement.startMoving(context);
 			pair.setRight(context);
 		}
 	}

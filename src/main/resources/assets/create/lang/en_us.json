@@ -116,6 +116,7 @@
 	"block.create.stress_gauge": "Stressometer",
 	"block.create.cart_assembler": "Cart Assembler",
 	"block.create.analog_lever": "Analog Lever",
+	"block.create.seat": "Seat",
 	"block.create.rotation_speed_controller": "Rotation Speed Controller",
 
 	"block.create.sticky_mechanical_piston": "Sticky Mechanical Piston",
@@ -1155,6 +1156,7 @@
 	"tool.create.rose_quartz.tooltip": "ROSE QUARTZ TOOLS",
 	"tool.create.rose_quartz.tooltip.summary": "This tool grants you a _greater_ _reach_ for _breaking_ _blocks_ or _placing_ _blocks_ from the off-hand.",
 	
+	"block.create.seat.tooltip": "WIP",
 	"item.create.logistical_controller_calculation.tooltip": "WIP",
 	"item.create.logistical_controller_request.tooltip": "WIP",
 	"item.create.logistical_controller_storage.tooltip": "WIP",

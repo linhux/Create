@@ -23,6 +23,7 @@ public class MovementContext {
 	public boolean firstMovement;
 	public CompoundNBT data;
 	public Contraption contraption;
+	public ContraptionEntity entity;
 	public Object temporaryData;
 
 	public MovementContext(World world, BlockInfo info) {

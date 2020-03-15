@@ -13,6 +13,8 @@ import com.simibubi.create.foundation.packet.SimplePacketBase;
 import com.simibubi.create.foundation.utility.ServerSpeedProvider;
 import com.simibubi.create.modules.contraptions.components.contraptions.CancelPlayerFallPacket;
 import com.simibubi.create.modules.contraptions.components.contraptions.ContraptionStallPacket;
+import com.simibubi.create.modules.contraptions.components.contraptions.seat.PlayerMountSeatPacket;
+import com.simibubi.create.modules.contraptions.components.contraptions.seat.SendSeatMappingPacket;
 import com.simibubi.create.modules.contraptions.relays.advanced.sequencer.ConfigureSequencedGearshiftPacket;
 import com.simibubi.create.modules.curiosities.symmetry.SymmetryEffectPacket;
 import com.simibubi.create.modules.curiosities.zapper.ZapperBeamPacket;
@@ -43,6 +45,7 @@ public enum AllPackets {
 	CONFIGURE_FILTERING_AMOUNT(FilteringCountUpdatePacket.class, FilteringCountUpdatePacket::new),
 	CONFIGURE_SCROLLABLE(ScrollValueUpdatePacket.class, ScrollValueUpdatePacket::new),
 	CANCEL_FALL(CancelPlayerFallPacket.class, CancelPlayerFallPacket::new),
+	MOUNT_SEAT(PlayerMountSeatPacket.class, PlayerMountSeatPacket::new),
 
 	// Server to Client
 	SYMMETRY_EFFECT(SymmetryEffectPacket.class, SymmetryEffectPacket::new),
@@ -51,6 +54,7 @@ public enum AllPackets {
 	CONFIGURE_CONFIG(ConfigureConfigPacket.class, ConfigureConfigPacket::new),
 	CONTRAPTION_STALL(ContraptionStallPacket.class, ContraptionStallPacket::new),
 	TOOL_HARVEST(AbstractToolItem.HarvestPacket.class, AbstractToolItem.HarvestPacket::new),
+	SEND_SEAT_MAPPINGS(SendSeatMappingPacket.class, SendSeatMappingPacket::new),
 	
 	;
 

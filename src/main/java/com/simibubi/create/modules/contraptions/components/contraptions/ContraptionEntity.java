@@ -5,6 +5,7 @@ import static com.simibubi.create.foundation.utility.AngleHelper.getShortestAngl
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -15,6 +16,7 @@ import com.simibubi.create.AllPackets;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.modules.contraptions.components.contraptions.bearing.BearingContraption;
 import com.simibubi.create.modules.contraptions.components.contraptions.piston.LinearActuatorTileEntity;
+import com.simibubi.create.modules.contraptions.components.contraptions.seat.SendSeatMappingPacket;
 
 import net.minecraft.block.material.PushReaction;
 import net.minecraft.client.Minecraft;
@@ -23,6 +25,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.BoatEntity;
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.IntNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.IPacket;
@@ -45,6 +48,7 @@ import net.minecraft.world.gen.feature.template.Template.BlockInfo;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -58,6 +62,7 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 	protected Vec3d motionBeforeStall;
 	protected boolean stationary;
 
+	public List<Integer> seatMapping = new ArrayList<>();
 	final List<Entity> collidingEntities = new ArrayList<>();
 
 	private static final DataParameter<Boolean> STALLED =
@@ -196,6 +201,7 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 		for (MutablePair<BlockInfo, MovementContext> pair : contraption.actors) {
 			MovementContext context = pair.right;
 			BlockInfo blockInfo = pair.left;
+			context.entity = this;
 			MovementBehaviour actor = Contraption.getMovement(blockInfo.state);
 
 			Vec3d actorPosition = new Vec3d(blockInfo.pos);
@@ -265,6 +271,10 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 		} else {
 			contraption.stalled = isStalled();
 		}
+	}
+
+	@Override
+	public void updatePassenger(Entity passenger) {
 	}
 
 	public void move(double x, double y, double z) {
@@ -366,6 +376,8 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 		}
 		if (compound.contains("Controller"))
 			controllerPos = NBTUtil.readBlockPos(compound.getCompound("Controller"));
+		seatMapping = compound.getList("SeatMapping", NBT.TAG_INT).stream().map(inbt -> ((IntNBT) inbt).getInt())
+				.collect(Collectors.toList());
 	}
 
 	public void attachToController() {
@@ -396,6 +408,9 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 		compound.putBoolean("Stalled", isStalled());
 		if (controllerPos != null)
 			compound.put("Controller", NBTUtil.writeBlockPos(controllerPos));
+		ListNBT seatMappingNBT = new ListNBT();
+		seatMapping.stream().map(IntNBT::new).forEach(seatMappingNBT::add);
+		compound.put("SeatMapping", seatMappingNBT);
 	}
 
 	@Override
@@ -483,6 +498,38 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 		return dataManager.get(STALLED);
 	}
 
+	@Override
+	protected void removePassenger(Entity passenger) {
+		int seatId = -1;
+		if (!world.isRemote) {
+			int indexOf = getPassengers().indexOf(passenger);
+			if (seatMapping.size() > indexOf && indexOf != -1) {
+				seatMapping.remove(indexOf);
+				seatId = indexOf;
+				AllPackets.channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> this),
+						new SendSeatMappingPacket(getEntityId(), seatMapping));
+			}
+		}
+		super.removePassenger(passenger);
+
+		if (seatId == -1 || seatId >= contraption.seats.size())
+			return;
+
+		float anglePitch = getPitch(1);
+		float angleYaw = getYaw(1);
+		float angleRoll = getRoll(1);
+		Vec3d rotationOffset = VecHelper.getCenterOf(BlockPos.ZERO);
+		Vec3d position = new Vec3d(contraption.seats.get(seatId));
+		position = VecHelper.rotate(position, angleRoll, angleYaw, anglePitch);
+		position = position.add(rotationOffset).add(posX, posY, posZ);
+		passenger.setPositionAndUpdate(position.x, position.y, position.z);
+	}
+
+	@Override
+	protected boolean canFitPassenger(Entity passenger) {
+		return this.getPassengers().size() < contraption.seats.size();
+	}
+
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void setPositionAndRotationDirect(double x, double y, double z, float yaw, float pitch,
@@ -522,6 +569,15 @@ public class ContraptionEntity extends Entity implements IEntityAdditionalSpawnD
 
 	public void setContraptionMotion(Vec3d vec) {
 		super.setMotion(vec);
+	}
+
+	public void occupySeat(Entity entity, int seatID) {
+		entity.startRiding(this);
+		if (entity.getRidingEntity() == this) {
+			seatMapping.add(getPassengers().indexOf(entity), seatID);
+			AllPackets.channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> this),
+					new SendSeatMappingPacket(getEntityId(), seatMapping));
+		}
 	}
 
 }

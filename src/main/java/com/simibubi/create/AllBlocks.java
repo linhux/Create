@@ -22,6 +22,7 @@ import com.simibubi.create.modules.contraptions.components.contraptions.piston.M
 import com.simibubi.create.modules.contraptions.components.contraptions.piston.MechanicalPistonHeadBlock;
 import com.simibubi.create.modules.contraptions.components.contraptions.piston.PistonPoleBlock;
 import com.simibubi.create.modules.contraptions.components.contraptions.pulley.PulleyBlock;
+import com.simibubi.create.modules.contraptions.components.contraptions.seat.SeatBlock;
 import com.simibubi.create.modules.contraptions.components.crafter.MechanicalCrafterBlock;
 import com.simibubi.create.modules.contraptions.components.crank.HandCrankBlock;
 import com.simibubi.create.modules.contraptions.components.crusher.CrushingWheelBlock;
@@ -159,6 +160,7 @@ public enum AllBlocks {
 	DEPLOYER(new DeployerBlock()),
 	PORTABLE_STORAGE_INTERFACE(new PortableStorageInterfaceBlock()),
 	ANALOG_LEVER(new AnalogLeverBlock()),
+	SEAT(new SeatBlock()),
 
 	ANDESITE_CASING(new CasingBlock("andesite_casing")),
 	COPPER_CASING(new CasingBlock("copper_casing")),
